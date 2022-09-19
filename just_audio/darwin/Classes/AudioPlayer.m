@@ -24,6 +24,7 @@
     NSMutableArray<IndexedAudioSource *> *_indexedAudioSources;
     NSArray<NSNumber *> *_order;
     NSMutableArray<NSNumber *> *_orderInv;
+    NSString *_userAgent;
     int _index;
     enum ProcessingState _processingState;
     enum LoopMode _loopMode;
@@ -47,11 +48,13 @@
     NSDictionary<NSString *, NSObject *> *_icyMetadata;
 }
 
-- (instancetype)initWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar playerId:(NSString*)idParam loadConfiguration:(NSDictionary *)loadConfiguration {
+- (instancetype)initWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar playerId:(NSString*)idParam loadConfiguration:(NSDictionary *)loadConfiguration userAgent: (NSString *)userAgent{
     self = [super init];
     NSAssert(self, @"super init cannot be nil");
     _registrar = registrar;
     _playerId = idParam;
+    _userAgent = userAgent;
+    
     _methodChannel =
         [FlutterMethodChannel methodChannelWithName:[NSMutableString stringWithFormat:@"com.ryanheise.just_audio.methods.%@", _playerId]
                                     binaryMessenger:[registrar messenger]];
@@ -448,11 +451,11 @@
 - (AudioSource *)decodeAudioSource:(NSDictionary *)data {
     NSString *type = data[@"type"];
     if ([@"progressive" isEqualToString:type]) {
-        return [[UriAudioSource alloc] initWithId:data[@"id"] uri:data[@"uri"] loadControl:_loadControl];
+        return [[UriAudioSource alloc] initWithId:data[@"id"] uri:data[@"uri"] loadControl:_loadControl userAgent: _userAgent];
     } else if ([@"dash" isEqualToString:type]) {
-        return [[UriAudioSource alloc] initWithId:data[@"id"] uri:data[@"uri"] loadControl:_loadControl];
+        return [[UriAudioSource alloc] initWithId:data[@"id"] uri:data[@"uri"] loadControl:_loadControl userAgent: _userAgent];
     } else if ([@"hls" isEqualToString:type]) {
-        return [[UriAudioSource alloc] initWithId:data[@"id"] uri:data[@"uri"] loadControl:_loadControl];
+        return [[UriAudioSource alloc] initWithId:data[@"id"] uri:data[@"uri"] loadControl:_loadControl userAgent: _userAgent];
     } else if ([@"concatenating" isEqualToString:type]) {
         return [[ConcatenatingAudioSource alloc] initWithId:data[@"id"]
                                                audioSources:[self decodeAudioSources:data[@"children"]]

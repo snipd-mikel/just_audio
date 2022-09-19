@@ -6,18 +6,20 @@
 
 @implementation UriAudioSource {
     NSString *_uri;
+    NSString *_userAgent;
     IndexedPlayerItem *_playerItem;
     IndexedPlayerItem *_playerItem2;
-    /* CMTime _duration; */
+    /* CMTime _duration; */ 
     LoadControl *_loadControl;
 }
 
-- (instancetype)initWithId:(NSString *)sid uri:(NSString *)uri loadControl:(LoadControl *)loadControl {
+- (instancetype)initWithId:(NSString *)sid uri:(NSString *)uri loadControl:(LoadControl *)loadControl userAgent: (NSString *)userAgent {
     self = [super initWithId:sid];
     NSAssert(self, @"super init cannot be nil");
     _uri = uri;
+    _userAgent = userAgent;
     _loadControl = loadControl;
-    _playerItem = [self createPlayerItem:uri];
+    _playerItem = [self createPlayerItem:uri userAgent: _userAgent];
     _playerItem2 = nil;
     return self;
 }
@@ -26,12 +28,21 @@
     return _uri;
 }
 
-- (IndexedPlayerItem *)createPlayerItem:(NSString *)uri {
+- (IndexedPlayerItem *)createPlayerItem:(NSString *)uri userAgent: (NSString *)userAgent {
     IndexedPlayerItem *item;
     if ([uri hasPrefix:@"file://"]) {
         item = [[IndexedPlayerItem alloc] initWithURL:[NSURL fileURLWithPath:[[uri stringByRemovingPercentEncoding] substringFromIndex:7]]];
     } else {
-        item = [[IndexedPlayerItem alloc] initWithURL:[NSURL URLWithString:uri]];
+        
+        NSDictionary *assetOptions = @{};
+        if ([userAgent length] > 0) {
+            assetOptions = @{
+                @"AVURLAssetHTTPHeaderFieldsKey": @{@"user-agent": userAgent}
+            };
+        }
+        
+        AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:[NSURL URLWithString:uri] options: assetOptions];
+        item = [[IndexedPlayerItem alloc] initWithAsset: asset];
     }
     if (@available(macOS 10.13, iOS 11.0, *)) {
         // This does the best at reducing distortion on voice with speeds below 1.0
@@ -130,7 +141,7 @@
 
 - (void)preparePlayerItem2 {
     if (!_playerItem2) {
-        _playerItem2 = [self createPlayerItem:_uri];
+        _playerItem2 = [self createPlayerItem:_uri userAgent: _userAgent];
         _playerItem2.audioSource = _playerItem.audioSource;
     }
 }

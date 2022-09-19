@@ -98,6 +98,7 @@ public class AudioPlayer implements MethodCallHandler, Player.Listener, Metadata
     private Map<String, AudioEffect> audioEffectsMap = new HashMap<String, AudioEffect>();
     private int lastPlaylistLength = 0;
     private Map<String, Object> pendingPlaybackEvent;
+    private String userAgent;
 
     private ExoPlayer player;
     private DefaultExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
@@ -134,10 +135,11 @@ public class AudioPlayer implements MethodCallHandler, Player.Listener, Metadata
         }
     };
 
-    public AudioPlayer(final Context applicationContext, final BinaryMessenger messenger, final String id, Map<?, ?> audioLoadConfiguration, List<Object> rawAudioEffects, Boolean offloadSchedulingEnabled) {
+    public AudioPlayer(final Context applicationContext, final BinaryMessenger messenger, final String id, Map<?, ?> audioLoadConfiguration, List<Object> rawAudioEffects, Boolean offloadSchedulingEnabled, String userAgent) {
         this.context = applicationContext;
         this.rawAudioEffects = rawAudioEffects;
         this.offloadSchedulingEnabled = offloadSchedulingEnabled != null ? offloadSchedulingEnabled : false;
+        this.userAgent = userAgent;
         methodChannel = new MethodChannel(messenger, "com.ryanheise.just_audio.methods." + id);
         methodChannel.setMethodCallHandler(this);
         eventChannel = new BetterEventChannel(messenger, "com.ryanheise.just_audio.events." + id);
@@ -593,20 +595,20 @@ public class AudioPlayer implements MethodCallHandler, Player.Listener, Metadata
         String id = (String)map.get("id");
         switch ((String)map.get("type")) {
         case "progressive":
-            return new ProgressiveMediaSource.Factory(buildDataSourceFactory(), extractorsFactory)
+            return new ProgressiveMediaSource.Factory(buildDataSourceFactory(userAgent), extractorsFactory)
                     .createMediaSource(new MediaItem.Builder()
                             .setUri(Uri.parse((String)map.get("uri")))
                             .setTag(id)
                             .build());
         case "dash":
-            return new DashMediaSource.Factory(buildDataSourceFactory())
+            return new DashMediaSource.Factory(buildDataSourceFactory(userAgent))
                     .createMediaSource(new MediaItem.Builder()
                             .setUri(Uri.parse((String)map.get("uri")))
                             .setMimeType(MimeTypes.APPLICATION_MPD)
                             .setTag(id)
                             .build());
         case "hls":
-            return new HlsMediaSource.Factory(buildDataSourceFactory())
+            return new HlsMediaSource.Factory(buildDataSourceFactory(userAgent))
                     .createMediaSource(new MediaItem.Builder()
                             .setUri(Uri.parse((String)map.get("uri")))
                             .setMimeType(MimeTypes.APPLICATION_M3U8)
@@ -687,8 +689,10 @@ public class AudioPlayer implements MethodCallHandler, Player.Listener, Metadata
         audioEffectsMap.clear();
     }
 
-    private DataSource.Factory buildDataSourceFactory() {
-        String userAgent = Util.getUserAgent(context, "just_audio");
+    private DataSource.Factory buildDataSourceFactory(String userAgent) {
+        if (userAgent == null) {
+            userAgent = Util.getUserAgent(context, "just_audio");
+        }
         DataSource.Factory httpDataSourceFactory = new DefaultHttpDataSource.Factory()
             .setUserAgent(userAgent)
             .setAllowCrossProtocolRedirects(true);

@@ -28,12 +28,13 @@
     if ([@"init" isEqualToString:call.method]) {
         NSDictionary *request = (NSDictionary *)call.arguments;
         NSString *playerId = (NSString *)request[@"id"];
+        NSString *userAgent = (NSString *) [self objectForKeyNotNull: @"userAgent" inDict: request];
         NSDictionary *loadConfiguration = (NSDictionary *)request[@"audioLoadConfiguration"];
         if ([_players objectForKey:playerId] != nil) {
             FlutterError *flutterError = [FlutterError errorWithCode:@"error" message:@"Platform player already exists" details:nil];
             result(flutterError);
         } else {
-            AudioPlayer* player = [[AudioPlayer alloc] initWithRegistrar:_registrar playerId:playerId loadConfiguration:loadConfiguration];
+            AudioPlayer* player = [[AudioPlayer alloc] initWithRegistrar:_registrar playerId:playerId loadConfiguration:loadConfiguration userAgent: userAgent];
             [_players setValue:player forKey:playerId];
             result(nil);
         }
@@ -52,6 +53,14 @@
     } else {
         result(FlutterMethodNotImplemented);
     }
+}
+
+- (id)objectForKeyNotNull:(NSString*)key inDict:(NSDictionary*)map {
+    id object = [map objectForKey:key];
+    if (object == [NSNull null])
+        return nil;
+      else
+        return object;
 }
 
 - (void)dealloc {

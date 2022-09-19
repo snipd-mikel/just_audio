@@ -1329,6 +1329,7 @@ class AudioPlayer {
       final platform = active
           ? await (_nativePlatform = _pluginPlatform.init(InitRequest(
               id: _id,
+              userAgent: _userAgent,
               audioLoadConfiguration: _audioLoadConfiguration?._toMessage(),
               androidAudioEffects: (_isAndroid() || _isUnitTest())
                   ? _audioPipeline.androidAudioEffects
@@ -2171,9 +2172,7 @@ abstract class UriAudioSource extends IndexedAudioSource {
     await super._setup(player);
     if (uri.scheme == 'asset') {
       _overrideUri = await _loadAsset(uri.pathSegments.join('/'));
-    } else if (uri.scheme != 'file' &&
-        !kIsWeb &&
-        (headers != null || player._userAgent != null)) {
+    } else if (uri.scheme != 'file' && !kIsWeb && (headers != null)) {
       await player._proxy.ensureRunning();
       _overrideUri = player._proxy.addUriAudioSource(this);
     }

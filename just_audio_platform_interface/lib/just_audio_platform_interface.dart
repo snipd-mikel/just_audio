@@ -385,10 +385,11 @@ class IcyHeadersMessage {
 /// player instance.
 class InitRequest {
   final String id;
-  final AudioLoadConfigurationMessage? audioLoadConfiguration;
   final List<AudioEffectMessage> androidAudioEffects;
   final List<AudioEffectMessage> darwinAudioEffects;
   final bool? androidOffloadSchedulingEnabled;
+  final String? userAgent;
+  final AudioLoadConfigurationMessage? audioLoadConfiguration;
 
   InitRequest({
     required this.id,
@@ -396,6 +397,7 @@ class InitRequest {
     this.androidAudioEffects = const [],
     this.darwinAudioEffects = const [],
     this.androidOffloadSchedulingEnabled,
+    this.userAgent,
   });
 
   Map<dynamic, dynamic> toMap() => <dynamic, dynamic>{
@@ -408,7 +410,8 @@ class InitRequest {
             .map((audioEffect) => audioEffect.toMap())
             .toList(),
         'androidOffloadSchedulingEnabled': androidOffloadSchedulingEnabled,
-      };
+        'userAgent': userAgent,
+  };
 }
 
 /// Information communicated to the platform implementation when disposing of a
