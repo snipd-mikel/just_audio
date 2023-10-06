@@ -637,6 +637,7 @@
     // Set up an empty player
     if (!_player) {
         _player = [[AVQueuePlayer alloc] initWithItems:@[]];
+        _player.allowsExternalPlayback = NO;
         if (@available(macOS 10.12, iOS 10.0, *)) {
             _player.automaticallyWaitsToMinimizeStalling = _automaticallyWaitsToMinimizeStalling;
             // TODO: Remove these observers in dispose.
